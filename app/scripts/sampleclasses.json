@@ -1,0 +1,14 @@
+{
+	"classes" : [
+		{
+			"className" : "Person",
+			"privateInstanceVariables" : ["String name", "int height"],
+			"publicMethods" : ["public String getName()", "public int getHeight()"]
+		},
+		{
+			"className" : "Dog",
+			"privateInstanceVariables" : ["String name", "int height"],
+			"publicMethods" : ["public String getName()", "public int getHeight()"]
+		}
+	]
+}
