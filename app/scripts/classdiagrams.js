@@ -11,8 +11,6 @@ var paper = new joint.dia.Paper({
 
 var uml = joint.shapes.uml;
 
-
-
 var classes = [];
 
 /**
@@ -48,15 +46,25 @@ var request = $.ajax({
 
           //$.each(data.classes, function(index, element) {
           $.each(data.results[0].data, function(index, element) {
-                console.log(element); 
 
-                var newClass 
+                console.log(element.name);
+                
+                element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
+                console.log("publicMethods=" + element.row[0].publicMethods); 
+
+                element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
+                console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+
+                var calculatedWidth = calcMaxWidthForClass(element.row[0]);
+                var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+
+                var newClass
                     = new uml.Class({
-                        //position: { x:450  , y: 500 },
-                        size: { width: 180, height: 200 },
+                        size: { width: calculatedWidth, height: calculatedHeight },
                         name : element.row[0].name,
                         attributes : element.row[0].privateInstanceVariables,
-                        methods : element.row[0].publicMethods
+                        methods : element.row[0].publicMethods, 
+                        fullyQualifiedName : element.row[0].fullyQualifiedName
 
         /**
                         name:  element.className,
@@ -112,11 +120,9 @@ var request = $.ajax({
             });
             */
 
-
-
             joint.layout.GridLayout.layout(graph, {
               columns: 4,
-              columnWidth: 300,
+              columnWidth: 320,
               rowHeight: 250
             });
 
@@ -132,6 +138,68 @@ request.done(function(data) {
 request.fail(function(jqXHR, textStatus) {
   alert( "Request failed: " + textStatus );
 });
+
+// Given an array of Strings, transform it nito a new array of Strings 
+// where the length of any one array element does not exceed the width limit
+function transformToMultiline(stringArray, widthLimit) {
+
+    console.log(stringArray);
+    if(typeof stringArray == 'undefined') {
+        console.log("stringArray is undefined");
+        return [];
+    }
+
+    stringArray = stringArray.map(function(orig) {
+        var transformed = "+ " + joint.util.breakText(orig, { width: widthLimit } );
+        console.log(transformed);
+        return transformed;
+    });
+
+    return stringArray;
+}
+
+function calcMaxWidthForClass(classData) {
+    var widthLimit = 300;
+    var pixelWidth = 6;
+    var calculatedWidth = 0;
+
+    // find the longest element to determine width
+    var maxWidth = classData.name.length;
+    $.each(classData.privateInstanceVariables, function(index, element) {
+        if(maxWidth < element.length) {
+            maxWidth = element.length;
+        }
+    });
+
+    $.each(classData.publicMethods, function(index, element) {
+        if(maxWidth < element.length) {
+            maxWidth = element.length;
+        }
+    });
+
+    calculatedWidth = maxWidth * pixelWidth;
+
+    if(calculatedWidth < widthLimit) {
+        return calculatedWidth;
+    } else {
+        return widthLimit;
+    }
+}
+
+function calcMaxHeightForClass(classData) {
+    var lineCount = 1;
+
+    $.each(classData.privateInstanceVariables, function(index, element) {
+        lineCount = lineCount + element.split(/\r\n|\r|\n/).length;
+    });
+
+    $.each(classData.publicMethods, function(index, element) {
+        lineCount = lineCount + element.split(/\r\n|\r|\n/).length;
+    });
+
+    var pixelHeight = 20;
+    return lineCount * pixelHeight;
+}
 
 joint.layout.GridLayout = {
 
@@ -207,6 +275,12 @@ joint.layout.GridLayout = {
     }
 };
 
+paper.on('cell:pointerdblclick ',
+    function(cellView, evt, x, y) {
+        console.log(cellView.model.attributes);
+        $("#classdetails").html('Class=' + cellView.model.attributes.fullyQualifiedName);
+    }
+);
 
 
 
