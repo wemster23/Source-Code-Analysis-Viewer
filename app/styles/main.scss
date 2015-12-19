@@ -92,7 +92,20 @@ body {
   }
 
   rect, text {
-    font-family: 'Raleway', sans-serif;
-    font-size:10px;
+    font-family: 'font-family: 'Montserrat', sans-serif;', sans-serif;
+    font-size:13px;
   }
+
+  .uml-class-name-rect {
+      fill: #349AF6;
+      stroke: #fff;
+      stroke-width: 0.5;
+  }
+
+  .uml-class-attrs-rect, .uml-class-methods-rect {
+      fill: #9FC0FF;
+      stroke: #fff;
+      stroke-width: 0.5;
+  }
+
 }

@@ -22,9 +22,7 @@ var request = $.ajax({
 */
 
 
-// The query
-var query= {"statements":[{"statement":"MATCH (n:`JavaClass`) RETURN n LIMIT 25",
-    "resultDataContents":["graph","row"]}]};
+
 
 //the helper function provided by neo4j documents
 function idIndex(a,id) {
@@ -32,112 +30,122 @@ function idIndex(a,id) {
         if (a[i].id == id) return i;}
     return null;
 }
-// jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
-var request = $.ajax({
-    type: "POST",
-    url: "http://localhost:7474/db/data/transaction/commit",
-    accepts: { json: "application/json" },
-    dataType: "json",
-    contentType:"application/json",
-    data: JSON.stringify(query),
-    //now pass a callback to success to do something with the data
-    success: function (data) {
-          console.log(data);
 
-          //$.each(data.classes, function(index, element) {
-          $.each(data.results[0].data, function(index, element) {
+function searchDatabase(searchCriteria) {
 
-                console.log(element.name);
-                
-                element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
-                console.log("publicMethods=" + element.row[0].publicMethods); 
+    console.log("searching for: " + searchCriteria);
 
-                element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
-                console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+    // The query
+    var query= {"statements":[{"statement":"MATCH (javaPackage:JavaPackage { name:'" + searchCriteria + "' })-[CONTAINS_CLASS]->(javaClass:JavaClass)  RETURN javaClass;",
+    "resultDataContents":["graph","row"]}]};
 
-                var calculatedWidth = calcMaxWidthForClass(element.row[0]);
-                var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+    // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
+    var request = $.ajax({
+        type: "POST",
+        url: "http://localhost:7474/db/data/transaction/commit",
+        accepts: { json: "application/json" },
+        dataType: "json",
+        contentType:"application/json",
+        data: JSON.stringify(query),
+        //now pass a callback to success to do something with the data
+        success: function (data) {
+              console.log(data);
 
-                var newClass
-                    = new uml.Class({
-                        size: { width: calculatedWidth, height: calculatedHeight },
-                        name : element.row[0].name,
-                        attributes : element.row[0].privateInstanceVariables,
-                        methods : element.row[0].publicMethods, 
-                        fullyQualifiedName : element.row[0].fullyQualifiedName
+              //$.each(data.classes, function(index, element) {
+              $.each(data.results[0].data, function(index, element) {
 
-        /**
-                        name:  element.className,
-                        attributes : element.privateInstanceVariables,
-                        methods: element.publicMethods
+                    console.log(element.name);
+                    
+                    element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
+                    console.log("publicMethods=" + element.row[0].publicMethods); 
 
-                        ,
-                        attrs: {
-                            '.uml-class-name-rect': {
-                                fill: '#ff8450',
-                                stroke: '#fff',
-                                'stroke-width': 0.5
-                            },
-                            '.uml-class-attrs-rect, .uml-class-methods-rect': {
-                                fill: '#fe976a',
-                                stroke: '#fff',
-                                'stroke-width': 0.5
-                            },
-                            '.uml-class-methods-text': {
-                                'ref-y': 0.5,
-                                'y-alignment': 'middle'
+                    element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
+                    console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+
+                    var calculatedWidth = calcMaxWidthForClass(element.row[0]);
+                    var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+
+                    var newClass
+                        = new uml.Class({
+                            size: { width: calculatedWidth, height: calculatedHeight },
+                            name : element.row[0].name,
+                            attributes : element.row[0].privateInstanceVariables,
+                            methods : element.row[0].publicMethods, 
+                            fullyQualifiedName : element.row[0].fullyQualifiedName
+
+            /**
+                            name:  element.className,
+                            attributes : element.privateInstanceVariables,
+                            methods: element.publicMethods
+
+                            ,
+                            attrs: {
+                                '.uml-class-name-rect': {
+                                    fill: '#ff8450',
+                                    stroke: '#fff',
+                                    'stroke-width': 0.5
+                                },
+                                '.uml-class-attrs-rect, .uml-class-methods-rect': {
+                                    fill: '#fe976a',
+                                    stroke: '#fff',
+                                    'stroke-width': 0.5
+                                },
+                                '.uml-class-methods-text': {
+                                    'ref-y': 0.5,
+                                    'y-alignment': 'middle'
+                                }
                             }
-                        }
-        */
-
-                    });
-
-                    classes.push(newClass);
-
-            });
-
-            _.each(classes, function(c) { graph.addCell(c); });
-
-            /**
-            var relations = [
-                new uml.Generalization({ source: { id: classes.man.id }, target: { id: classes.person.id }}),
-                new uml.Generalization({ source: { id: classes.woman.id }, target: { id: classes.person.id }}),
-                new uml.Implementation({ source: { id: classes.person.id }, target: { id: classes.mammal.id }}),
-                new uml.Aggregation({ source: { id: classes.person.id }, target: { id: classes.address.id }}),
-                new uml.Composition({ source: { id: classes.person.id }, target: { id: classes.bloodgroup.id }})
-            ];
-
-            _.each(relations, function(r) { graph.addCell(r); });
             */
 
-            // This causes diagrams to be spaced out
-            // still need to figure out how to auto-size each uml.Class
-            /**
-            var res = joint.layout.DirectedGraph.layout(graph, {
-                nodeSep: 50,
-                edgeSep: 80,
-                rankDir: "TB"
-            });
-            */
+                        });
 
-            joint.layout.GridLayout.layout(graph, {
-              columns: 4,
-              columnWidth: 320,
-              rowHeight: 250
-            });
+                        classes.push(newClass);
 
-            paper.fitToContent();
+                });
 
-    }
-});
+                _.each(classes, function(c) { graph.addCell(c); });
 
-request.done(function(data) {
+                /**
+                var relations = [
+                    new uml.Generalization({ source: { id: classes.man.id }, target: { id: classes.person.id }}),
+                    new uml.Generalization({ source: { id: classes.woman.id }, target: { id: classes.person.id }}),
+                    new uml.Implementation({ source: { id: classes.person.id }, target: { id: classes.mammal.id }}),
+                    new uml.Aggregation({ source: { id: classes.person.id }, target: { id: classes.address.id }}),
+                    new uml.Composition({ source: { id: classes.person.id }, target: { id: classes.bloodgroup.id }})
+                ];
 
-});
+                _.each(relations, function(r) { graph.addCell(r); });
+                */
 
-request.fail(function(jqXHR, textStatus) {
-  alert( "Request failed: " + textStatus );
-});
+                // This causes diagrams to be spaced out
+                // still need to figure out how to auto-size each uml.Class
+                /**
+                var res = joint.layout.DirectedGraph.layout(graph, {
+                    nodeSep: 50,
+                    edgeSep: 80,
+                    rankDir: "TB"
+                });
+                */
+
+                joint.layout.GridLayout.layout(graph, {
+                  columns: 4,
+                  columnWidth: 320,
+                  rowHeight: 250
+                });
+
+                paper.fitToContent();
+
+        }
+    });
+
+    request.done(function(data) {
+
+    });
+
+    request.fail(function(jqXHR, textStatus) {
+      alert( "Request failed: " + textStatus );
+    });
+}
 
 // Given an array of Strings, transform it nito a new array of Strings 
 // where the length of any one array element does not exceed the width limit
@@ -160,7 +168,8 @@ function transformToMultiline(stringArray, widthLimit) {
 
 function calcMaxWidthForClass(classData) {
     var widthLimit = 300;
-    var pixelWidth = 6;
+    var minWidth = 100;
+    var pixelWidth = 8;
     var calculatedWidth = 0;
 
     // find the longest element to determine width
@@ -179,7 +188,9 @@ function calcMaxWidthForClass(classData) {
 
     calculatedWidth = maxWidth * pixelWidth;
 
-    if(calculatedWidth < widthLimit) {
+    if(calculatedWidth < minWidth) {
+        return minWidth;
+    } else if(calculatedWidth < widthLimit) {
         return calculatedWidth;
     } else {
         return widthLimit;
@@ -197,7 +208,7 @@ function calcMaxHeightForClass(classData) {
         lineCount = lineCount + element.split(/\r\n|\r|\n/).length;
     });
 
-    var pixelHeight = 20;
+    var pixelHeight = 25;
     return lineCount * pixelHeight;
 }
 
@@ -281,6 +292,10 @@ paper.on('cell:pointerdblclick ',
         $("#classdetails").html('Class=' + cellView.model.attributes.fullyQualifiedName);
     }
 );
+
+$("#packagesearchbutton").click(function() {
+    searchDatabase($("#packagesearchinput").val());
+});
 
 
 
