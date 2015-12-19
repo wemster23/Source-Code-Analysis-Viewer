@@ -2,7 +2,7 @@
 <html class="no-js" lang="">
   <head>
     <meta charset="utf-8">
-    <title>Source Analyzer</title>
+    <title>Packages</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -20,8 +20,6 @@
     <!-- build:css(.tmp) styles/main.css -->
     <link rel="stylesheet" href="styles/main.css">
 
-    <link rel="stylesheet" type="text/css" href="http://jointjs.com/downloads/joint.css" />
-
     <!-- endbuild -->
     <!-- build:js scripts/vendor/modernizr.js -->
     <script src="bower_components/modernizr/modernizr.js"></script>
@@ -37,24 +35,15 @@
     <div class="container">
       <div class="header">
         <ul class="nav nav-tabs pull-right">
-          <li class="active"><a href="index.html">Classes</a></li>
-          <li><a href="packages.html">Packages</a></li>
+          <li><a href="index.html">Classes</a></li>
+          <li class="active"><a href="packages.html">Packages</a></li>
         </ul>
-        <h3 class="text-muted">Classes</h3>
+        <h3 class="text-muted">Packages</h3>
       </div>
 
-      <!--
-      <div id="jumbo" class="jumbotron">
-      -->
+      <div id="listpackages">
 
-      <div id="search">
-        <form class="form-horizontal">
-          <input type="text" class="form-control" id="packagesearchinput" placeholder="Search for classes in this package"/><button type="button" id="packagesearchbutton" class="btn btn-default">Search</button>
-      </form>
       </div>
-
-      <div id="paper" class="paper"></div>
-      <div id="classdetails"></div>
 
       <div class="footer">
 
@@ -88,20 +77,8 @@
     
 
     <!-- build:js scripts/main.js -->
-    <script src="scripts/main.js"></script>
-    <script src="//d3js.org/d3.v3.js"></script>
     
-    <!-- uncomment for d3 bubble -->
-    <!-- <script src="scripts/bubble.js"></script> -->
-
-
-    <script src="http://jointjs.com/js/vendor/lodash/lodash.min.js"></script>
-    <script src="http://jointjs.com/downloads/joint.js"></script>
-    <script src="http://jointjs.com/downloads/joint.shapes.uml.js"></script>
-    <script src="scripts/graphlib.core.js"></script>
-    <script src="scripts/dagre.core.js"></script>
-    <script src="http://jointjs.com/downloads/joint.layout.DirectedGraph.js"></script>
-    <script src="scripts/classdiagrams.js"></script>
+    <script src="scripts/packages.js"></script>
 
 
     <!-- endbuild -->
