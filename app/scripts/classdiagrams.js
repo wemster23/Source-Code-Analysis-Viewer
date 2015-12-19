@@ -2,8 +2,6 @@ var graph = new joint.dia.Graph();
 
 var paper = new joint.dia.Paper({
     el: $('#paper'),
-    //width: 1000,
-    //height: 800,
     gridSize: 1,
     model: graph
 });
@@ -49,6 +47,9 @@ function searchDatabase(searchCriteria) {
         data: JSON.stringify(query),
         //now pass a callback to success to do something with the data
         success: function (data) {
+              
+              var largestHeight = 0;
+
               console.log(data);
 
               //$.each(data.classes, function(index, element) {
@@ -64,6 +65,9 @@ function searchDatabase(searchCriteria) {
 
                     var calculatedWidth = calcMaxWidthForClass(element.row[0]);
                     var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+                    if(calculatedHeight > largestHeight) {
+                        largestHeight = calculatedHeight;
+                    }
 
                     var newClass
                         = new uml.Class({
@@ -128,9 +132,9 @@ function searchDatabase(searchCriteria) {
                 */
 
                 joint.layout.GridLayout.layout(graph, {
-                  columns: 4,
+                  columns: 3,
                   columnWidth: 320,
-                  rowHeight: 250
+                  rowHeight: largestHeight
                 });
 
                 paper.fitToContent();
