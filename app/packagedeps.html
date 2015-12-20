@@ -2,7 +2,7 @@
 <html class="no-js" lang="">
   <head>
     <meta charset="utf-8">
-    <title>Source Analyzer</title>
+    <title>Package Dependency Graph</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -22,6 +22,8 @@
 
     <link rel="stylesheet" type="text/css" href="http://jointjs.com/downloads/joint.css" />
 
+    <link rel="stylesheet" href="http://cdn.graphalchemist.com/alchemy.min.css">
+
     <!-- endbuild -->
     <!-- build:js scripts/vendor/modernizr.js -->
     <script src="bower_components/modernizr/modernizr.js"></script>
@@ -37,26 +39,15 @@
     <div class="container">
       <div class="header">
         <ul class="nav nav-tabs pull-right">
-          <li class="active"><a href="index.html">Classes</a></li>
+          <li ><a href="index.html">Classes</a></li>
           <li><a href="packages.html">Packages</a></li>
-          <li><a href="packagedeps.html">Package Dep Graph</a></li>
+          <li class="active"><a href="packagedeps.html">Package Dep Graph</a></li>
         </ul>
-        <h3 class="text-muted">Classes</h3>
+        <h3 class="text-muted">Package Dependency Graph</h3>
 
       </div>
 
-      <!--
-      <div id="jumbo" class="jumbotron">
-      -->
-
-      <div id="search">
-        <form class="form-horizontal">
-          <input type="text" class="form-control" id="packagesearchinput" placeholder="Search for classes in this package ... i.e. com.yummynoodlebar.core.domain"/><button type="button" id="packagesearchbutton" class="btn btn-default">Search</button>
-        </form>
-      </div>
-
-      <div id="paper" class="paper"></div>
-      <div id="classdetails"></div>
+      <div id="alchemy" class="alchemy"></div>
 
       <div class="footer">
 
@@ -103,8 +94,8 @@
     <script src="scripts/graphlib.core.js"></script>
     <script src="scripts/dagre.core.js"></script>
     <script src="http://jointjs.com/downloads/joint.layout.DirectedGraph.js"></script>
-    <script src="scripts/classdiagrams.js"></script>
-
+    <script type="text/javascript" src="http://cdn.graphalchemist.com/alchemy.min.js"></script>
+    <script type="text/javascript" src="scripts/packagedeps.js"></script>
 
     <!-- endbuild -->
 
