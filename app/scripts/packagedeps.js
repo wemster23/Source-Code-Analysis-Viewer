@@ -36,8 +36,8 @@ function searchDatabase(searchCriteria) {
         data: JSON.stringify(query),
         //now pass a callback to success to do something with the data
         success: function (data) {
-                console.log(data);
-                console.log(JSON.stringify(data));
+                //console.log(data);
+                //console.log(JSON.stringify(data));
 
                 $.each(data.results[0].data, function(index, element) {
                     //console.log(element.graph.nodes[0].id);
@@ -86,9 +86,9 @@ function getRelationships(graphJson) {
         data: JSON.stringify(query),
         //now pass a callback to success to do something with the data
         success: function (data) {
-                console.log(data);
-                console.log(JSON.stringify(data));
-                console.log("ajaxed relationship data");
+                //console.log(data);
+                //console.log(JSON.stringify(data));
+                //console.log("ajaxed relationship data");
 
                 $.each(data.results[0].data, function(index, element) {
                     
@@ -107,10 +107,29 @@ function getRelationships(graphJson) {
                   initialScale: 0.7, 
                   directedEdges: true, 
                   edgeArrowSize: 2, 
-                  graphHeight: function() { return 700; }
+                  nodeStyle: {
+                  "all": {
+                      "radius": 5,
+                      "captionSize": 4
+                    }
+                  }, 
+                  edgeStyle: {
+                    "all": {
+                      "width": function(d) {
+                        return 2; 
+                      }
+                    }
+                  },  
+                  graphHeight: function() { return 700; }, 
+                  nodeMouseOver: function(node) {
+                    $("#selectednodedetails").html(node._properties.caption + " has " + node.outDegree() + " relationships");
+                    return node.outDegree();
+                  }
                 };
 
                 alchemy = new Alchemy(config);
+
+                $("#packagedepstats").html("Showing " + graphJson.nodes.length + " package nodes with " + graphJson.edges.length + " relationships");
         }
     });
 
@@ -123,7 +142,7 @@ function getRelationships(graphJson) {
     });
 }
 
-
+// 
 
 
 
