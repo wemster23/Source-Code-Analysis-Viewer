@@ -302,6 +302,9 @@ paper.on('cell:pointerdblclick ',
 
 function searchPackages(searchCriteria) {
 
+    // clear existing results
+    $("#searchresults").html("");
+
     // The query
     var query= {"statements":[{"statement":"MATCH (n:JavaPackage) WHERE n.name CONTAINS '" + searchCriteria + "' RETURN n",
     "resultDataContents":["row"]}]};
@@ -343,7 +346,6 @@ function searchPackages(searchCriteria) {
 }
 
 $("#packagesearchbutton").click(function() {
-    
     searchPackages($("#packagesearchinput").val());
 });
 
