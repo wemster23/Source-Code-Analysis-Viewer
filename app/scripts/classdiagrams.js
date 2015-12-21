@@ -31,7 +31,8 @@ function idIndex(a,id) {
 
 function searchDatabase(searchCriteria) {
 
-    console.log("searching for: " + searchCriteria);
+    $("#showingpackage").html("Showing package " + searchCriteria);
+    //console.log("searching for: " + searchCriteria);
 
     // The query
     var query= {"statements":[{"statement":"MATCH (javaPackage:JavaPackage { name:'" + searchCriteria + "' })-[CONTAINS_CLASS]->(javaClass:JavaClass)  RETURN javaClass;",
@@ -50,18 +51,18 @@ function searchDatabase(searchCriteria) {
               
               var largestHeight = 0;
 
-              console.log(data);
+              //console.log(data);
 
               //$.each(data.classes, function(index, element) {
               $.each(data.results[0].data, function(index, element) {
 
-                    console.log(element.name);
+                    //console.log(element.name);
                     
                     element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
-                    console.log("publicMethods=" + element.row[0].publicMethods); 
+                    //console.log("publicMethods=" + element.row[0].publicMethods); 
 
                     element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
-                    console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+                    //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
 
                     var calculatedWidth = calcMaxWidthForClass(element.row[0]);
                     var calculatedHeight = calcMaxHeightForClass(element.row[0]);
@@ -155,7 +156,7 @@ function searchDatabase(searchCriteria) {
 // where the length of any one array element does not exceed the width limit
 function transformToMultiline(stringArray, widthLimit) {
 
-    console.log(stringArray);
+    //console.log(stringArray);
     if(typeof stringArray == 'undefined') {
         console.log("stringArray is undefined");
         return [];
@@ -163,7 +164,7 @@ function transformToMultiline(stringArray, widthLimit) {
 
     stringArray = stringArray.map(function(orig) {
         var transformed = "+ " + joint.util.breakText(orig, { width: widthLimit } );
-        console.log(transformed);
+        //console.log(transformed);
         return transformed;
     });
 
@@ -292,15 +293,62 @@ joint.layout.GridLayout = {
 
 paper.on('cell:pointerdblclick ',
     function(cellView, evt, x, y) {
-        console.log(cellView.model.attributes);
+        //console.log(cellView.model.attributes);
         $("#classdetails").html('Class=' + cellView.model.attributes.fullyQualifiedName);
     }
 );
 
+
+
+function searchPackages(searchCriteria) {
+
+    // The query
+    var query= {"statements":[{"statement":"MATCH (n:JavaPackage) WHERE n.name CONTAINS '" + searchCriteria + "' RETURN n",
+    "resultDataContents":["row"]}]};
+
+    // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
+    var request = $.ajax({
+        type: "POST",
+        url: "http://localhost:7474/db/data/transaction/commit",
+        accepts: { json: "application/json" },
+        dataType: "json",
+        contentType:"application/json",
+        data: JSON.stringify(query),
+        //now pass a callback to success to do something with the data
+        success: function (data) {
+                //console.log("package search results:");
+                //console.log(data);
+
+                $.each(data.results[0].data, function(index, element) {
+
+                    //console.log(element.row[0]);
+                    $("#searchresults").append("<a class='packagesearchlink'>" + element.row[0].name + "</a><br/>");
+                });
+
+                $(".packagesearchlink").click(function(event) {
+                    event.preventDefault();
+                    var text = $(event.target).text();
+                    searchDatabase(text);
+                });
+        }
+    });
+
+    request.done(function(data) {
+
+    });
+
+    request.fail(function(jqXHR, textStatus) {
+      alert( "Request failed: " + textStatus );
+    });
+}
+
 $("#packagesearchbutton").click(function() {
-    searchDatabase($("#packagesearchinput").val());
+    
+    searchPackages($("#packagesearchinput").val());
 });
 
+// initially load the page with ..
+searchPackages("");
 
 
 
