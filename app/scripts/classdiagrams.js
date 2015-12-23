@@ -6,10 +6,9 @@ var paper = new joint.dia.Paper({
     model: graph
 });
 
-
 var uml = joint.shapes.uml;
 
-var classes = [];
+
 
 /**
 var request = $.ajax({
@@ -31,6 +30,8 @@ function idIndex(a,id) {
 
 function searchDatabase(searchCriteria) {
 
+    
+
     $("#showingpackage").html("Showing package " + searchCriteria);
     //console.log("searching for: " + searchCriteria);
 
@@ -49,9 +50,8 @@ function searchDatabase(searchCriteria) {
         //now pass a callback to success to do something with the data
         success: function (data) {
               
+              var classes = [];
               var largestHeight = 0;
-
-              //console.log(data);
 
               //$.each(data.classes, function(index, element) {
               $.each(data.results[0].data, function(index, element) {
@@ -108,7 +108,7 @@ function searchDatabase(searchCriteria) {
 
                 });
 
-                _.each(classes, function(c) { graph.addCell(c); });
+                graph.resetCells(classes);
 
                 /**
                 var relations = [
@@ -158,7 +158,7 @@ function transformToMultiline(stringArray, widthLimit) {
 
     //console.log(stringArray);
     if(typeof stringArray == 'undefined') {
-        console.log("stringArray is undefined");
+        //console.log("stringArray is undefined");
         return [];
     }
 
