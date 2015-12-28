@@ -8,152 +8,16 @@ var paper = new joint.dia.Paper({
 
 var uml = joint.shapes.uml;
 
-
-
-/**
-var request = $.ajax({
-  url: "scripts/sampleclasses.json",
-  type: "GET",
-  dataType: "json"
-});
-*/
-
-
-
-
-//the helper function provided by neo4j documents
-function idIndex(a,id) {
-    for (var i=0;i<a.length;i++) {
-        if (a[i].id == id) return i;}
-    return null;
-}
-
 function searchDatabase(searchCriteria) {
-
-    
-
     $("#showingpackage").html("Showing package " + searchCriteria);
-    //console.log("searching for: " + searchCriteria);
 
     // The query
     var query= {"statements":[{"statement":"MATCH (javaPackage:JavaPackage { name:'" + searchCriteria + "' })-[CONTAINS_CLASS]->(javaClass:JavaClass)  RETURN javaClass;",
     "resultDataContents":["graph","row"]}]};
-
-    // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
-    var request = $.ajax({
-        type: "POST",
-        url: "http://localhost:7474/db/data/transaction/commit",
-        accepts: { json: "application/json" },
-        dataType: "json",
-        contentType:"application/json",
-        data: JSON.stringify(query),
-        //now pass a callback to success to do something with the data
-        success: function (data) {
-              
-              var classes = [];
-              var largestHeight = 0;
-
-              //$.each(data.classes, function(index, element) {
-              $.each(data.results[0].data, function(index, element) {
-
-                    //console.log(element.name);
-                    
-                    element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
-                    //console.log("publicMethods=" + element.row[0].publicMethods); 
-
-                    element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
-                    //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
-
-                    var calculatedWidth = calcMaxWidthForClass(element.row[0]);
-                    var calculatedHeight = calcMaxHeightForClass(element.row[0]);
-                    if(calculatedHeight > largestHeight) {
-                        largestHeight = calculatedHeight;
-                    }
-
-                    var newClass
-                        = new uml.Class({
-                            size: { width: calculatedWidth, height: calculatedHeight },
-                            name : element.row[0].name,
-                            attributes : element.row[0].privateInstanceVariables,
-                            methods : element.row[0].publicMethods, 
-                            fullyQualifiedName : element.row[0].fullyQualifiedName
-
-            /**
-                            name:  element.className,
-                            attributes : element.privateInstanceVariables,
-                            methods: element.publicMethods
-
-                            ,
-                            attrs: {
-                                '.uml-class-name-rect': {
-                                    fill: '#ff8450',
-                                    stroke: '#fff',
-                                    'stroke-width': 0.5
-                                },
-                                '.uml-class-attrs-rect, .uml-class-methods-rect': {
-                                    fill: '#fe976a',
-                                    stroke: '#fff',
-                                    'stroke-width': 0.5
-                                },
-                                '.uml-class-methods-text': {
-                                    'ref-y': 0.5,
-                                    'y-alignment': 'middle'
-                                }
-                            }
-            */
-
-                        });
-
-                        classes.push(newClass);
-
-                });
-
-                graph.resetCells(classes);
-
-                /**
-                var relations = [
-                    new uml.Generalization({ source: { id: classes.man.id }, target: { id: classes.person.id }}),
-                    new uml.Generalization({ source: { id: classes.woman.id }, target: { id: classes.person.id }}),
-                    new uml.Implementation({ source: { id: classes.person.id }, target: { id: classes.mammal.id }}),
-                    new uml.Aggregation({ source: { id: classes.person.id }, target: { id: classes.address.id }}),
-                    new uml.Composition({ source: { id: classes.person.id }, target: { id: classes.bloodgroup.id }})
-                ];
-
-                _.each(relations, function(r) { graph.addCell(r); });
-                */
-
-                // This causes diagrams to be spaced out
-                // still need to figure out how to auto-size each uml.Class
-                /**
-                var res = joint.layout.DirectedGraph.layout(graph, {
-                    nodeSep: 50,
-                    edgeSep: 80,
-                    rankDir: "TB"
-                });
-                */
-
-                joint.layout.GridLayout.layout(graph, {
-                  columns: 3,
-                  columnWidth: 320,
-                  rowHeight: largestHeight
-                });
-
-                paper.fitToContent();
-
-        }
-    });
-
-    request.done(function(data) {
-
-    });
-
-    request.fail(function(jqXHR, textStatus) {
-      alert( "Request failed: " + textStatus );
-    });
+    
+    displayForQuery(query);
 }
 
-// quickly copied above search to prototype
-// ONLY difference is query so must refactor!
 function searchWithinClasses(searchCriteria) {
 
     //console.log("searching for: " + searchCriteria);
@@ -162,6 +26,12 @@ function searchWithinClasses(searchCriteria) {
     var query= {"statements":[{"statement":"MATCH (j:JavaClass) WHERE ANY(fullyQualifiedName IN j.fullyQualifiedName WHERE fullyQualifiedName  =~ '(?i).*" + searchCriteria + ".*') OR ANY(method IN j.publicMethods WHERE method  =~ '(?i).*" + searchCriteria + ".*') OR ANY(var IN j.privateInstanceVariables WHERE var  =~ '(?i).*" + searchCriteria + ".*') RETURN DISTINCT j;",
     "resultDataContents":["graph","row"]}]};
 
+    displayForQuery(query);
+}
+
+// takes a given neo4j cypher query and displays the results as UML class diagrams
+function displayForQuery(query) {
+
     // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
     var request = $.ajax({
         type: "POST",
@@ -173,8 +43,6 @@ function searchWithinClasses(searchCriteria) {
         //now pass a callback to success to do something with the data
         success: function (data) {
               
-              $("#showingpackage").html("Showing " + data.results[0].data.length + " classes matching " + searchCriteria);
-
               var classes = [];
               var largestHeight = 0;
 
@@ -202,31 +70,6 @@ function searchWithinClasses(searchCriteria) {
                             attributes : element.row[0].privateInstanceVariables,
                             methods : element.row[0].publicMethods, 
                             fullyQualifiedName : element.row[0].fullyQualifiedName
-
-            /**
-                            name:  element.className,
-                            attributes : element.privateInstanceVariables,
-                            methods: element.publicMethods
-
-                            ,
-                            attrs: {
-                                '.uml-class-name-rect': {
-                                    fill: '#ff8450',
-                                    stroke: '#fff',
-                                    'stroke-width': 0.5
-                                },
-                                '.uml-class-attrs-rect, .uml-class-methods-rect': {
-                                    fill: '#fe976a',
-                                    stroke: '#fff',
-                                    'stroke-width': 0.5
-                                },
-                                '.uml-class-methods-text': {
-                                    'ref-y': 0.5,
-                                    'y-alignment': 'middle'
-                                }
-                            }
-            */
-
                         });
 
                         classes.push(newClass);
@@ -235,28 +78,6 @@ function searchWithinClasses(searchCriteria) {
 
                 graph.resetCells(classes);
 
-                /**
-                var relations = [
-                    new uml.Generalization({ source: { id: classes.man.id }, target: { id: classes.person.id }}),
-                    new uml.Generalization({ source: { id: classes.woman.id }, target: { id: classes.person.id }}),
-                    new uml.Implementation({ source: { id: classes.person.id }, target: { id: classes.mammal.id }}),
-                    new uml.Aggregation({ source: { id: classes.person.id }, target: { id: classes.address.id }}),
-                    new uml.Composition({ source: { id: classes.person.id }, target: { id: classes.bloodgroup.id }})
-                ];
-
-                _.each(relations, function(r) { graph.addCell(r); });
-                */
-
-                // This causes diagrams to be spaced out
-                // still need to figure out how to auto-size each uml.Class
-                /**
-                var res = joint.layout.DirectedGraph.layout(graph, {
-                    nodeSep: 50,
-                    edgeSep: 80,
-                    rankDir: "TB"
-                });
-                */
-
                 joint.layout.GridLayout.layout(graph, {
                   columns: 3,
                   columnWidth: 320,
@@ -264,6 +85,8 @@ function searchWithinClasses(searchCriteria) {
                 });
 
                 paper.fitToContent();
+
+                $("#showingpackage").html("Showing " + classes.length + " results");
 
         }
     });
@@ -276,11 +99,6 @@ function searchWithinClasses(searchCriteria) {
       alert( "Request failed: " + textStatus );
     });
 }
-
-
-
-
-
 
 // Given an array of Strings, transform it nito a new array of Strings 
 // where the length of any one array element does not exceed the width limit
@@ -428,6 +246,8 @@ paper.on('cell:pointerdblclick ',
     }
 );
 
+// given searchCriteria, searches neo4j for any package containing that criteria and displays 
+// linkable search results below the search input
 function searchPackages(searchCriteria) {
 
     // clear existing results
@@ -449,6 +269,7 @@ function searchPackages(searchCriteria) {
         success: function (data) {
                 //console.log("package search results:");
                 //console.log(data);
+                $("#searchresults").append(data.results[0].data.length + " results for package " + searchCriteria + "<br/>");
 
                 $.each(data.results[0].data, function(index, element) {
 
@@ -477,7 +298,7 @@ $("#packagesearchbutton").click(function() {
     searchPackages($("#packagesearchinput").val());
 });
 
-// initially load the page with ..
+// initially load the page with a package listing
 searchPackages("");
 
 $("#classsearchbutton").click(function() {
