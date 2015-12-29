@@ -1,7 +1,9 @@
 var graph = new joint.dia.Graph();
 
 var paper = new joint.dia.Paper({
-    el: $('#paper'),
+    el: $('#paper'), 
+    width: $('#paper').width(), 
+    //height: $('#paper').height(), 
     gridSize: 1,
     model: graph
 });
@@ -78,13 +80,11 @@ function displayForQuery(query) {
 
                 graph.resetCells(classes);
 
-                joint.layout.GridLayout.layout(graph, {
-                  columns: 3,
-                  columnWidth: 320,
-                  rowHeight: largestHeight
+                joint.layout.SimpleFitLayout.layout(graph, {
+
                 });
 
-                paper.fitToContent();
+                //paper.fitToContent();
 
                 $("#showingpackage").html("Showing " + classes.length + " results");
 
@@ -161,82 +161,71 @@ function calcMaxHeightForClass(classData) {
         lineCount = lineCount + element.split(/\r\n|\r|\n/).length;
     });
 
-    var pixelHeight = 25;
+    var pixelHeight = 23;
     return lineCount * pixelHeight;
 }
 
-joint.layout.GridLayout = {
+// This layout uses a simple algorithm that displays graph 
+// elements from left to right, top to bottom sequentially 
+// without overlapping or overflowing paper borders.
+joint.layout.SimpleFitLayout = {
 
     layout: function(graph, opt) {
 
-    opt = opt || {};
+        opt = opt || {};
 
-    var elements = graph.getElements();
+        var elements = graph.getElements();
 
-    // number of columns
-    var columns = opt.columns || 1;
+        if(elements.length > 0) {
+            var lastElement = graph.getElements().pop();
 
-    // shift the element horizontally by a given amount
-    var dx = opt.dx || 0;
+            var margin = opt.margin || 10;
 
-    // shift the element vertically by a given amount
-    var dy = opt.dy || 0;
+            // may want to change input of this function to take 
+            // in a paper
+            var paperWidth = paper.options.width;
 
-    // width of a column
-    var columnWidth = opt.columnWidth || this._maxDim(elements, 'width') + dx;
+            var curX = margin;
+            var curY = margin;
+            var maxHeightInRow = 0;
 
-    // height of a row
-    var rowHeight = opt.rowHeight ||  this._maxDim(elements, 'height') + dy;
+            // iterate the elements and position them accordingly
+            _.each(elements, function(element, index) {
+                var elementSize = element.get('size');
+                var newRow = false;
 
-    // position the elements in the centre of a grid cell
-    var centre = _.isUndefined(opt.centre) || opt.centre !== false;
+                if(curX + elementSize.width < (paperWidth + margin)) {
+                    // use curX
+                } else { // time for a new row
+                    curX = margin;
+                    newRow = true;
+                }
 
-    // resize the elements to fit a grid cell & preserves ratio
-    var resizeToFit = !!opt.resizeToFit;
+                // still need to account for old row
+                if(newRow) {
+                    curY = curY + maxHeightInRow + margin;
+                    maxHeightInRow = 0;
+                } 
 
-    // iterate the elements and position them accordingly
-    _.each(elements, function(element, index) {
+                if(elementSize.height > maxHeightInRow) {
+                    maxHeightInRow = elementSize.height;
+                }
 
-        var cx = 0, cy = 0, elementSize = element.get('size');
+                element.set('position', {
+                    x: curX,
+                    y: curY
+                });
 
-        if (resizeToFit) {
+                curX = curX + elementSize.width + margin; // next x loc
+            });
 
-        var elementWidth = columnWidth - 2*dx;
-        var elementHeight = rowHeight - 2*dy;
-
-        var calcElHeight = elementSize.height * (elementSize.width ? elementWidth/elementSize.width : 1);
-        var calcElWidth = elementSize.width * (elementSize.height ? elementHeight/elementSize.height : 1);
-
-        if (calcElHeight > rowHeight) {
-
-            elementWidth = calcElWidth;
+            paper.setDimensions(paper.options.width, lastElement.get('size').height + lastElement.get('position').y + margin);
         } else {
-            elementHeight = calcElHeight;
+            paper.setDimensions(margin, margin);
         }
-
-        elementSize = { width: elementWidth, height: elementHeight };
-
-
-        element.set('size', elementSize);
-        }
-
-        if (centre) {
-        cx = (columnWidth - elementSize.width) / 2;
-        cy = (rowHeight - elementSize.height) / 2;
-        }
-
-        element.set('position', {
-        x: (index % columns) * columnWidth + dx + cx,
-        y: Math.floor(index / columns) * rowHeight + dy + cy
-        });
-    });
-    },
-
-    // find maximal dimension (width/height) in an array of the elements
-    _maxDim: function(elements, dimension) {
-
-    return _.reduce(elements, function(max, el) { return Math.max(el.get('size')[dimension], max); }, 0);
     }
+
+    
 };
 
 paper.on('cell:pointerdblclick ',
