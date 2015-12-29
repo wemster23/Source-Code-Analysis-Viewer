@@ -33,40 +33,40 @@
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
-    
-    <div class="container">
-      <div class="header">
-        <ul class="nav nav-tabs pull-right">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <ul class="nav nav-tabs pull-right">
           <li class="active"><a href="index.html">Classes</a></li>
           <li><a href="packages.html">Packages</a></li>
           <li><a href="packagedeps.html">Package Dep Graph</a></li>
-        </ul>
-        <h3 class="text-muted">Classes</h3>
-
+      </ul>
+      
+      <form class="navbar-form navbar-left" role="search">
+        <div class="form-group">
+          What are you looking for?  
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <button type="button" id="searchsubmit" class="btn btn-default">Search</button>
+      </form>
+    </nav>
+    <div class="container">
+      <div id="search">
+        
+        <form class="form-horizontal">
+          <div id="closesearch">Close</div>
+          Display classes containing ...
+          <input type="text" class="form-control" id="classsearchinput" value=""/><button type="button" id="classsearchbutton" class="btn btn-default">Display</button><br/>
+          Search For packages ...
+          <input type="text" class="form-control" id="packagesearchinput" value=""/><button type="button" id="packagesearchbutton" class="btn btn-default">Search</button><br/>
+          
+        </form>
+        <div id="searchresults"></div>
       </div>
 
-      <div class="row">
-        <div class="col-md-10">
-          <div id="showingpackage"></div>
-          <div id="paper" class="paper "></div>
-          <div id="classdetails"></div>
-        </div>
-        <div class="col-md-2">
-          <div id="search">
-              
-              <form class="form-horizontal">
-                Display classes containing ...
-                <input type="text" class="form-control" id="classsearchinput" value=""/><button type="button" id="classsearchbutton" class="btn btn-default">Display</button><br/>
-                Search For packages ...
-                <input type="text" class="form-control" id="packagesearchinput" value=""/><button type="button" id="packagesearchbutton" class="btn btn-default">Search</button><br/>
-                
-              </form>
-            </div>
-            <div id="searchresults">
-
-            </div>
-        </div>
-      </row>
+      <div id="main-body">
+        <div id="showingpackage"></div>
+        <div id="paper" class="paper "></div>
+        <div id="classdetails"></div>
+      </div>
 
       <div class="footer">
 

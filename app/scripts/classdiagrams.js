@@ -3,7 +3,7 @@ var graph = new joint.dia.Graph();
 var paper = new joint.dia.Paper({
     el: $('#paper'), 
     width: $('#paper').width(), 
-    //height: $('#paper').height(), 
+    height: $('#paper').height(), 
     gridSize: 1,
     model: graph
 });
@@ -84,7 +84,7 @@ function displayForQuery(query) {
 
                 });
 
-                //paper.fitToContent();
+                paper.fitToContent();
 
                 $("#showingpackage").html("Showing " + classes.length + " results");
 
@@ -218,11 +218,7 @@ joint.layout.SimpleFitLayout = {
 
                 curX = curX + elementSize.width + margin; // next x loc
             });
-
-            paper.setDimensions(paper.options.width, lastElement.get('size').height + lastElement.get('position').y + margin);
-        } else {
-            paper.setDimensions(margin, margin);
-        }
+       } 
     }
 
     
@@ -336,6 +332,13 @@ function offsetToLocalPoint(x, y) {
 
 paper.$el.on('mousewheel DOMMouseScroll', onMouseWheel);
 
+$("#searchsubmit").click(function () {
+    $("#search").slideDown(300);
+});
+
+$("#closesearch").click(function () {
+    $("#search").slideUp(200);
+});
 
 
 
