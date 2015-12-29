@@ -10,17 +10,7 @@ var paper = new joint.dia.Paper({
 
 var uml = joint.shapes.uml;
 
-function searchDatabase(searchCriteria) {
-    $("#showingpackage").html("Showing package " + searchCriteria);
-
-    // The query
-    var query= {"statements":[{"statement":"MATCH (javaPackage:JavaPackage { name:'" + searchCriteria + "' })-[CONTAINS_CLASS]->(javaClass:JavaClass)  RETURN javaClass;",
-    "resultDataContents":["graph","row"]}]};
-    
-    displayForQuery(query);
-}
-
-function searchWithinClasses(searchCriteria) {
+function searchWithinClasses(searchCriteria, displayOnGraph) {
 
     //console.log("searching for: " + searchCriteria);
 
@@ -28,11 +18,11 @@ function searchWithinClasses(searchCriteria) {
     var query= {"statements":[{"statement":"MATCH (j:JavaClass) WHERE ANY(fullyQualifiedName IN j.fullyQualifiedName WHERE fullyQualifiedName  =~ '(?i).*" + searchCriteria + ".*') OR ANY(method IN j.publicMethods WHERE method  =~ '(?i).*" + searchCriteria + ".*') OR ANY(var IN j.privateInstanceVariables WHERE var  =~ '(?i).*" + searchCriteria + ".*') RETURN DISTINCT j;",
     "resultDataContents":["graph","row"]}]};
 
-    displayForQuery(query);
+    search(query, displayOnGraph);
 }
 
-// takes a given neo4j cypher query and displays the results as UML class diagrams
-function displayForQuery(query) {
+// takes a given neo4j cypher query and optionally displays the results as UML class diagrams
+function search(query, displayOnGraph) {
 
     // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
     var request = $.ajax({
@@ -45,48 +35,59 @@ function displayForQuery(query) {
         //now pass a callback to success to do something with the data
         success: function (data) {
               
-              var classes = [];
-              var largestHeight = 0;
+              if(displayOnGraph) {
+                  var classes = [];
+                  var largestHeight = 0;
 
-              //$.each(data.classes, function(index, element) {
-              $.each(data.results[0].data, function(index, element) {
+                  //$.each(data.classes, function(index, element) {
+                  $.each(data.results[0].data, function(index, element) {
 
-                    //console.log(element.name);
-                    
-                    element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
-                    //console.log("publicMethods=" + element.row[0].publicMethods); 
+                        //console.log(element.name);
+                        
+                        element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
+                        //console.log("publicMethods=" + element.row[0].publicMethods); 
 
-                    element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
-                    //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+                        element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
+                        //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
 
-                    var calculatedWidth = calcMaxWidthForClass(element.row[0]);
-                    var calculatedHeight = calcMaxHeightForClass(element.row[0]);
-                    if(calculatedHeight > largestHeight) {
-                        largestHeight = calculatedHeight;
-                    }
+                        var calculatedWidth = calcMaxWidthForClass(element.row[0]);
+                        var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+                        if(calculatedHeight > largestHeight) {
+                            largestHeight = calculatedHeight;
+                        }
 
-                    var newClass
-                        = new uml.Class({
-                            size: { width: calculatedWidth, height: calculatedHeight },
-                            name : element.row[0].name,
-                            attributes : element.row[0].privateInstanceVariables,
-                            methods : element.row[0].publicMethods, 
-                            fullyQualifiedName : element.row[0].fullyQualifiedName
-                        });
+                        var newClass
+                            = new uml.Class({
+                                size: { width: calculatedWidth, height: calculatedHeight },
+                                name : element.row[0].name,
+                                attributes : element.row[0].privateInstanceVariables,
+                                methods : element.row[0].publicMethods, 
+                                fullyQualifiedName : element.row[0].fullyQualifiedName
+                            });
 
-                        classes.push(newClass);
+                            classes.push(newClass);
 
-                });
+                    });
 
-                graph.resetCells(classes);
+                    graph.resetCells(classes);
 
-                joint.layout.SimpleFitLayout.layout(graph, {
+                    joint.layout.SimpleFitLayout.layout(graph, {
 
-                });
+                    });
 
-                paper.fitToContent();
+                    paper.fitToContent();
 
-                $("#showingpackage").html("Showing " + classes.length + " results");
+                    $("#showingpackage").html("Showing " + classes.length + " results");
+                } else {
+                    // display in search results
+                    $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'" + "</div><table class='table table-hover'><thead><tr><th>Class</th><th>Fully Qualified Classname</th></tr></thead><tbody>");
+
+                    $.each(data.results[0].data, function(index, element) {
+                        $("#searchresults").append("<tr><td>" + element.row[0].name + "</td><td>" + element.row[0].fullyQualifiedName + "</td></tr>");
+                    });
+
+                    $("#searchresults").append("</tbody></table>");
+                }
 
         }
     });
@@ -99,6 +100,73 @@ function displayForQuery(query) {
       alert( "Request failed: " + textStatus );
     });
 }
+
+/**
+// given searchCriteria, searches neo4j for any package containing that criteria and displays 
+// linkable search results below the search input
+function searchPackages(searchCriteria) {
+
+    // clear existing results
+    $("#searchresults").html("");
+
+    // The query
+    var query= {"statements":[{"statement":"MATCH (n:JavaPackage) WHERE n.name CONTAINS '" + searchCriteria + "' RETURN n",
+    "resultDataContents":["row"]}]};
+
+    // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
+    var request = $.ajax({
+        type: "POST",
+        url: "http://localhost:7474/db/data/transaction/commit",
+        accepts: { json: "application/json" },
+        dataType: "json",
+        contentType:"application/json",
+        data: JSON.stringify(query),
+        //now pass a callback to success to do something with the data
+        success: function (data) {
+                //console.log("package search results:");
+                //console.log(data);
+                $("#searchresults").append(data.results[0].data.length + " results for package " + searchCriteria + "<br/>");
+
+                $.each(data.results[0].data, function(index, element) {
+
+                    //console.log(element.row[0]);
+                    $("#searchresults").append("<a class='packagesearchlink'>" + element.row[0].name + "</a><br/>");
+                });
+
+                $(".packagesearchlink").click(function(event) {
+                    event.preventDefault();
+                    var text = $(event.target).text();
+                    searchDatabase(text);
+                });
+        }
+    });
+
+    request.done(function(data) {
+
+    });
+
+    request.fail(function(jqXHR, textStatus) {
+      alert( "Request failed: " + textStatus );
+    });
+}
+*/
+
+$("#searchsubmit").click(function () {
+    searchWithinClasses($("#classsearchinput").val(), false);
+    $("#search").slideDown(300);
+});
+
+$("#closesearch").click(function () {
+    $("#search").slideUp(200);
+});
+
+$("#showindiagram").click(function () {
+    searchWithinClasses($("#classsearchinput").val(), true);
+    $("#search").slideUp(200);
+});
+
+$('#classsearchinput').tooltip();
+
 
 // Given an array of Strings, transform it nito a new array of Strings 
 // where the length of any one array element does not exceed the width limit
@@ -231,67 +299,6 @@ paper.on('cell:pointerdblclick ',
     }
 );
 
-// given searchCriteria, searches neo4j for any package containing that criteria and displays 
-// linkable search results below the search input
-function searchPackages(searchCriteria) {
-
-    // clear existing results
-    $("#searchresults").html("");
-
-    // The query
-    var query= {"statements":[{"statement":"MATCH (n:JavaPackage) WHERE n.name CONTAINS '" + searchCriteria + "' RETURN n",
-    "resultDataContents":["row"]}]};
-
-    // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
-    var request = $.ajax({
-        type: "POST",
-        url: "http://localhost:7474/db/data/transaction/commit",
-        accepts: { json: "application/json" },
-        dataType: "json",
-        contentType:"application/json",
-        data: JSON.stringify(query),
-        //now pass a callback to success to do something with the data
-        success: function (data) {
-                //console.log("package search results:");
-                //console.log(data);
-                $("#searchresults").append(data.results[0].data.length + " results for package " + searchCriteria + "<br/>");
-
-                $.each(data.results[0].data, function(index, element) {
-
-                    //console.log(element.row[0]);
-                    $("#searchresults").append("<a class='packagesearchlink'>" + element.row[0].name + "</a><br/>");
-                });
-
-                $(".packagesearchlink").click(function(event) {
-                    event.preventDefault();
-                    var text = $(event.target).text();
-                    searchDatabase(text);
-                });
-        }
-    });
-
-    request.done(function(data) {
-
-    });
-
-    request.fail(function(jqXHR, textStatus) {
-      alert( "Request failed: " + textStatus );
-    });
-}
-
-$("#packagesearchbutton").click(function() {
-    searchPackages($("#packagesearchinput").val());
-});
-
-// initially load the page with a package listing
-searchPackages("");
-
-$("#classsearchbutton").click(function() {
-    searchWithinClasses($("#classsearchinput").val());
-});
-
-
-
 // use this to do something upon right click like 
 // pop up a modal
 // http://jointjs.com/api#joint.dia.Paper%3aevents
@@ -332,13 +339,7 @@ function offsetToLocalPoint(x, y) {
 
 paper.$el.on('mousewheel DOMMouseScroll', onMouseWheel);
 
-$("#searchsubmit").click(function () {
-    $("#search").slideDown(300);
-});
 
-$("#closesearch").click(function () {
-    $("#search").slideUp(200);
-});
 
 
 

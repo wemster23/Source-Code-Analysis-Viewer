@@ -34,31 +34,27 @@
     <![endif]-->
 
     <nav class="navbar navbar-default navbar-fixed-top">
-      <ul class="nav nav-tabs pull-right">
-          <li class="active"><a href="index.html">Classes</a></li>
-          <li><a href="packages.html">Packages</a></li>
-          <li><a href="packagedeps.html">Package Dep Graph</a></li>
-      </ul>
       
-      <form class="navbar-form navbar-left" role="search">
+      <span class="navbar-brand">Dependency Analzyer</span>
+      <ul class="nav nav-tabs pull-left">
+        <li class="active"><a href="index.html">Classes</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="packagedeps.html">Package Dep Graph</a></li>
+      </ul>
+      <form id="navsearch" class="navbar-form navbar-right" role="search">
         <div class="form-group">
           What are you looking for?  
-          <input type="text" class="form-control" placeholder="Search">
+          <input type="text" class="form-control" id="classsearchinput" placeholder="Search" data-toggle="tooltip" data-placement="bottom" title="Searches across fully qualified class names, instance variables, and methods">
+          <button type="button" id="searchsubmit" class="btn btn-default">Search</button>
         </div>
-        <button type="button" id="searchsubmit" class="btn btn-default">Search</button>
       </form>
+
+
     </nav>
     <div class="container">
       <div id="search">
-        
-        <form class="form-horizontal">
-          <div id="closesearch">Close</div>
-          Display classes containing ...
-          <input type="text" class="form-control" id="classsearchinput" value=""/><button type="button" id="classsearchbutton" class="btn btn-default">Display</button><br/>
-          Search For packages ...
-          <input type="text" class="form-control" id="packagesearchinput" value=""/><button type="button" id="packagesearchbutton" class="btn btn-default">Search</button><br/>
-          
-        </form>
+        <button type="button" id="closesearch" class="btn btn-danger">Close</button>
+        <button type="button" id="showindiagram" class="btn btn-primary">Show in class diagram</button>
         <div id="searchresults"></div>
       </div>
 
