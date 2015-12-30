@@ -15,7 +15,7 @@ function searchWithinClasses(searchCriteria, displayOnGraph) {
     //console.log("searching for: " + searchCriteria);
 
     // The query
-    var query= {"statements":[{"statement":"MATCH (j:JavaClass) WHERE ANY(fullyQualifiedName IN j.fullyQualifiedName WHERE fullyQualifiedName  =~ '(?i).*" + searchCriteria + ".*') OR ANY(method IN j.publicMethods WHERE method  =~ '(?i).*" + searchCriteria + ".*') OR ANY(var IN j.privateInstanceVariables WHERE var  =~ '(?i).*" + searchCriteria + ".*') RETURN DISTINCT j;",
+    var query= {"statements":[{"statement":"MATCH (p:JavaPackage)-[CONTAINS_CLASS]->(j:JavaClass) WHERE ANY(fullyQualifiedName IN j.fullyQualifiedName WHERE fullyQualifiedName  =~ '(?i).*" + searchCriteria + ".*') OR ANY(method IN j.publicMethods WHERE method  =~ '(?i).*" + searchCriteria + ".*') OR ANY(var IN j.privateInstanceVariables WHERE var  =~ '(?i).*" + searchCriteria + ".*') RETURN j, p as package;",
     "resultDataContents":["graph","row"]}]};
 
     search(query, displayOnGraph);
@@ -80,13 +80,28 @@ function search(query, displayOnGraph) {
                     $("#showingpackage").html("Showing " + classes.length + " results");
                 } else {
                     // display in search results
-                    $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'" + "</div><table class='table table-hover'><thead><tr><th>Class</th><th>Fully Qualified Classname</th></tr></thead><tbody>");
+                    $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'");
 
-                    $.each(data.results[0].data, function(index, element) {
-                        $("#searchresults").append("<tr><td>" + element.row[0].name + "</td><td><span class='classspan'>" + element.row[0].fullyQualifiedName + "</span></td></tr>");
+                    // listing grouped by package - packageSet['pkgName']
+                    var packageMap =  _.groupBy(data.results[0].data, function(cur) {
+                        return cur.row[1].name;
                     });
 
-                    $("#searchresults").append("</tbody></table>");
+                    $.each(packageMap, function(packageNameKey, classArray) {
+
+                        var tableHtml = "";
+
+                        tableHtml += "<table class='table'><tbody>";
+                        tableHtml += "<tr><td class='packageresult'><span class='lead'>" + packageNameKey + "</span> contains <span class='lead'>" + classArray.length + "</span> matching classes</td></tr>";
+
+                        $.each(classArray, function(curPackage, curClassArray) {
+                            tableHtml += "<tr><td class='classresult'>" + curClassArray.row[0].name + "</td></tr>";
+                        });
+                        tableHtml += "</tbody></table>";
+
+                        $("#searchresults").append(tableHtml);
+                    });
+
                 }
 
         }
@@ -295,6 +310,7 @@ joint.layout.SimpleFitLayout = {
 // use this to do something upon right click like 
 // pop up a modal
 // http://jointjs.com/api#joint.dia.Paper%3aevents
+// http://stackoverflow.com/questions/4666367/how-do-i-position-a-div-relative-to-the-mouse-pointer-using-jquery
 paper.on('cell:contextmenu ',
     function(cellView, evt, x, y) {
         evt.preventDefault();
@@ -303,7 +319,7 @@ paper.on('cell:contextmenu ',
         updateClassDetails(cellView.model.attributes);
 
         // show modal at point of right click
-        $("#classdetails").css({'top':evt.pageY,'left':evt.pageX}).fadeIn('slow');
+        $("#classdetails").css({'top':evt.pageY - 20,'left':evt.pageX - 20}).fadeIn('slow');
     }
 );
 
