@@ -298,15 +298,19 @@ joint.layout.SimpleFitLayout = {
 paper.on('cell:contextmenu ',
     function(cellView, evt, x, y) {
         evt.preventDefault();
+        console.log(evt);
         //console.log(cellView.model.attributes);
         updateClassDetails(cellView.model.attributes);
-        Custombox.open({
-                            target: '#classdetails',
-                            effect: 'contentscale', 
-                            overlayOpacity: 0.9
-                        });
+
+        // show modal at point of right click
+        $("#classdetails").css({'top':evt.pageY,'left':evt.pageX}).fadeIn('slow');
     }
 );
+
+// when mouse leaves modal, hide it
+$("#classdetails").mouseleave(function(){
+  $("#classdetails").fadeOut('slow');
+});
 
 function updateClassDetails(node) {
     $("#classdetails").html("");
