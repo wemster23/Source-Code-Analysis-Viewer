@@ -89,14 +89,37 @@ function search(query, displayOnGraph) {
 
                     $.each(packageMap, function(packageNameKey, classArray) {
 
+                        // 5 classes per row
+
                         var tableHtml = "";
+                        var currentClassesInRow = 0;
 
                         tableHtml += "<table class='table'><tbody>";
-                        tableHtml += "<tr><td class='packageresult'><span class='lead'>" + packageNameKey + "</span> contains <span class='lead'>" + classArray.length + "</span> matching classes</td></tr>";
+                        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='lead'>" + packageNameKey + "</span> contains <span class='lead'>" + classArray.length + "</span> matching classes</td></tr>";
 
                         $.each(classArray, function(curPackage, curClassArray) {
-                            tableHtml += "<tr><td class='classresult'>" + curClassArray.row[0].name + "</td></tr>";
+
+                            if(currentClassesInRow === 0) {
+                                tableHtml += "<tr>";
+                            }
+
+                            currentClassesInRow++
+
+                            tableHtml += "<td class='classresult'>" + curClassArray.row[0].name + "</td>";
+                            
+                            if(currentClassesInRow === 5) {
+                                tableHtml += "</tr>";
+                                currentClassesInRow = 0;
+                            }
                         });
+
+                        if(currentClassesInRow != 0) {
+                            for(i = currentClassesInRow; i < 5; i++) {
+                                tableHtml += "<td class='classresult'></td>";
+                            }
+                            tableHtml += "</tr>"
+                        }
+
                         tableHtml += "</tbody></table>";
 
                         $("#searchresults").append(tableHtml);
