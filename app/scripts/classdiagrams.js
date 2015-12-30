@@ -83,7 +83,7 @@ function search(query, displayOnGraph) {
                     $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'" + "</div><table class='table table-hover'><thead><tr><th>Class</th><th>Fully Qualified Classname</th></tr></thead><tbody>");
 
                     $.each(data.results[0].data, function(index, element) {
-                        $("#searchresults").append("<tr><td>" + element.row[0].name + "</td><td>" + element.row[0].fullyQualifiedName + "</td></tr>");
+                        $("#searchresults").append("<tr><td>" + element.row[0].name + "</td><td><span class='classspan'>" + element.row[0].fullyQualifiedName + "</span></td></tr>");
                     });
 
                     $("#searchresults").append("</tbody></table>");
@@ -292,22 +292,32 @@ joint.layout.SimpleFitLayout = {
     
 };
 
-paper.on('cell:pointerdblclick ',
-    function(cellView, evt, x, y) {
-        //console.log(cellView.model.attributes);
-        $("#classdetails").html('Class=' + cellView.model.attributes.fullyQualifiedName);
-    }
-);
-
 // use this to do something upon right click like 
 // pop up a modal
 // http://jointjs.com/api#joint.dia.Paper%3aevents
 paper.on('cell:contextmenu ',
     function(cellView, evt, x, y) {
         evt.preventDefault();
-        console.log(cellView.model.attributes);
+        //console.log(cellView.model.attributes);
+        updateClassDetails(cellView.model.attributes);
+        Custombox.open({
+                            target: '#classdetails',
+                            effect: 'contentscale', 
+                            overlayOpacity: 0.9
+                        });
     }
 );
+
+function updateClassDetails(node) {
+    $("#classdetails").html("");
+    $("#classdetails").append("<h4>" + node.name + "</h4><br/>");
+    $("#classdetails").append(node.fullyQualifiedName + "<br/><br>");
+    $("#classdetails").append("(Links below do not yet function)<br/>");
+    $("#classdetails").append("<a href='#'>View Source Code</a><br/>");
+    $("#classdetails").append("<a href='#'>View Class In Package</a><br/>");
+    $("#classdetails").append("<a href='#'>View Package Dependency Graph For Class's Package</a><br/>");
+    $("#classdetails").append("<a href='#'>Create Proposed Revision</a><br/>");
+}
 
 // on mouse wheel zoom
 // http://jsfiddle.net/kumilingus/atnoopkm/
@@ -338,6 +348,8 @@ function offsetToLocalPoint(x, y) {
 }
 
 paper.$el.on('mousewheel DOMMouseScroll', onMouseWheel);
+
+
 
 
 

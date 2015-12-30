@@ -153,4 +153,16 @@ body {
   #navsearch {
     padding-right: 30px;
   }
+
+  #classdetails {
+    font-size:12px;
+    background-color: #FFF;
+    width: 600px;
+    border: #000 solid 1px;
+    border-radius: 8px;
+    box-shadow: 0 8px 6px -6px black;
+    text-align: left;
+    padding: 30px;
+    display: none;
+  }
 }
