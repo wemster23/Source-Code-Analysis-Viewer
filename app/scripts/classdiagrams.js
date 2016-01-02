@@ -61,7 +61,7 @@ function displayOnGraph(data) {
 
     });
 
-    paper.fitToContent();
+    paper.fitToContent({ gridWidth : $('#paper').width() });
 
     $("#showingpackage").html("Showing " + classes.length + " results");
 }
@@ -86,7 +86,7 @@ function displayInTable(data) {
 
         var currentClassesInRow = 0;
         
-        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='packagelarge'>(" + classArray.length + ") " + packageNameKey + "</span></td></tr>";
+        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='packagelarge'>(" + classArray.length + ") <a href='#' class='packagesearchlink'>" + packageNameKey + "</a></span></td></tr>";
 
         $.each(classArray, function(curPackage, curClassArray) {
 
@@ -120,6 +120,15 @@ function displayInTable(data) {
 
     $("#toggleclasses").click(function () {
         $(".classtablerow").toggle();
+    });
+
+    // when clicking on a package name, show display all classes in that package
+    $(".packagesearchlink").click(function (evt) {
+        evt.preventDefault();
+        var text = $(event.target).text();
+        console.log("link val=" + text);
+        displayPackageOnGraph(text);
+        $("#search").slideUp(200);
     });
 }
 
@@ -214,6 +223,15 @@ $("#showindiagram").click(function () {
 
 $('#classsearchinput').tooltip();
 
+// displays a given package name on the graph
+function displayPackageOnGraph(packageName) {
+
+    // The query
+    var query= {"statements":[{"statement":"MATCH (p:JavaPackage)-[CONTAINS_CLASS]->(j:JavaClass) WHERE p.name = '" + packageName + "' RETURN j;",
+    "resultDataContents":["graph","row"]}]};
+
+    executeNeo4jQuery(query, displayOnGraph);
+}
 
 // Given an array of Strings, transform it nito a new array of Strings 
 // where the length of any one array element does not exceed the width limit
