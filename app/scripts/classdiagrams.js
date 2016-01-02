@@ -87,20 +87,21 @@ function search(query, displayOnGraph) {
                         return cur.row[1].name;
                     });
 
+                    var tableHtml = "";
+                    tableHtml += "<table class='table'><tbody>";
+
                     $.each(packageMap, function(packageNameKey, classArray) {
 
                         // 5 classes per row
 
-                        var tableHtml = "";
                         var currentClassesInRow = 0;
-
-                        tableHtml += "<table class='table'><tbody>";
-                        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='lead'>" + packageNameKey + "</span> contains <span class='lead'>" + classArray.length + "</span> matching classes</td></tr>";
+                        
+                        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='packagelarge'>(" + classArray.length + ") " + packageNameKey + "</span></td></tr>";
 
                         $.each(classArray, function(curPackage, curClassArray) {
 
                             if(currentClassesInRow === 0) {
-                                tableHtml += "<tr>";
+                                tableHtml += "<tr class='classtablerow'>";
                             }
 
                             currentClassesInRow++
@@ -120,11 +121,16 @@ function search(query, displayOnGraph) {
                             tableHtml += "</tr>"
                         }
 
-                        tableHtml += "</tbody></table>";
-
-                        $("#searchresults").append(tableHtml);
+                        
                     });
 
+                    tableHtml += "</tbody></table>";
+
+                    $("#searchresults").append(tableHtml);
+
+                    $("#toggleclasses").click(function () {
+                        $(".classtablerow").toggle();
+                    });
                 }
 
         }
