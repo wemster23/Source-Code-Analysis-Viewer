@@ -10,20 +10,121 @@ var paper = new joint.dia.Paper({
 
 var uml = joint.shapes.uml;
 
-function searchWithinClasses(searchCriteria, displayOnGraph) {
-
-    //console.log("searching for: " + searchCriteria);
+// builds a generic neo4j search query (that searches across key class attributes and packages)
+function buildGenericSearchQuery(searchCriteria) {
 
     // The query
     var query= {"statements":[{"statement":"MATCH (p:JavaPackage)-[CONTAINS_CLASS]->(j:JavaClass) WHERE ANY(fullyQualifiedName IN j.fullyQualifiedName WHERE fullyQualifiedName  =~ '(?i).*" + searchCriteria + ".*') OR ANY(method IN j.publicMethods WHERE method  =~ '(?i).*" + searchCriteria + ".*') OR ANY(var IN j.privateInstanceVariables WHERE var  =~ '(?i).*" + searchCriteria + ".*') RETURN j, p as package;",
     "resultDataContents":["graph","row"]}]};
 
-    search(query, displayOnGraph);
+    return query;
 }
 
-// takes a given neo4j cypher query and optionally displays the results as UML class diagrams
-function search(query, displayOnGraph) {
+// displays Neo4j query results in the class diagram table
+function displayOnGraph(data) {
+  var classes = [];
+  var largestHeight = 0;
 
+  //$.each(data.classes, function(index, element) {
+  $.each(data.results[0].data, function(index, element) {
+
+        //console.log(element.name);
+        
+        element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
+        //console.log("publicMethods=" + element.row[0].publicMethods); 
+
+        element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
+        //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
+
+        var calculatedWidth = calcMaxWidthForClass(element.row[0]);
+        var calculatedHeight = calcMaxHeightForClass(element.row[0]);
+        if(calculatedHeight > largestHeight) {
+            largestHeight = calculatedHeight;
+        }
+
+        var newClass
+            = new uml.Class({
+                size: { width: calculatedWidth, height: calculatedHeight },
+                name : element.row[0].name,
+                attributes : element.row[0].privateInstanceVariables,
+                methods : element.row[0].publicMethods, 
+                fullyQualifiedName : element.row[0].fullyQualifiedName
+            });
+
+            classes.push(newClass);
+
+    });
+
+    graph.resetCells(classes);
+
+    joint.layout.SimpleFitLayout.layout(graph, {
+
+    });
+
+    paper.fitToContent();
+
+    $("#showingpackage").html("Showing " + classes.length + " results");
+}
+
+// displays Neo4j formatted results in a drop down table
+function displayInTable(data) {
+
+    // display in search results
+    $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'");
+
+    // listing grouped by package - packageSet['pkgName']
+    var packageMap =  _.groupBy(data.results[0].data, function(cur) {
+        return cur.row[1].name;
+    });
+
+    var tableHtml = "";
+    tableHtml += "<table class='table'><tbody>";
+
+    $.each(packageMap, function(packageNameKey, classArray) {
+
+        // 5 classes per row
+
+        var currentClassesInRow = 0;
+        
+        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='packagelarge'>(" + classArray.length + ") " + packageNameKey + "</span></td></tr>";
+
+        $.each(classArray, function(curPackage, curClassArray) {
+
+            if(currentClassesInRow === 0) {
+                tableHtml += "<tr class='classtablerow'>";
+            }
+
+            currentClassesInRow++
+
+            tableHtml += "<td class='classresult'>" + curClassArray.row[0].name + "</td>";
+            
+            if(currentClassesInRow === 5) {
+                tableHtml += "</tr>";
+                currentClassesInRow = 0;
+            }
+        });
+
+        if(currentClassesInRow != 0) {
+            for(i = currentClassesInRow; i < 5; i++) {
+                tableHtml += "<td class='classresult'></td>";
+            }
+            tableHtml += "</tr>"
+        }
+
+        
+    });
+
+    tableHtml += "</tbody></table>";
+
+    $("#searchresults").append(tableHtml);
+
+    $("#toggleclasses").click(function () {
+        $(".classtablerow").toggle();
+    });
+}
+
+// executes a Neo4j query and then a callback function with that data
+function executeNeo4jQuery(query, callback) {
     // jQuery ajax call - http://stackoverflow.com/questions/29440613/return-the-graph-structure-of-a-neo4j-cypher-query-using-jquery
     var request = $.ajax({
         type: "POST",
@@ -34,105 +135,7 @@ function search(query, displayOnGraph) {
         data: JSON.stringify(query),
         //now pass a callback to success to do something with the data
         success: function (data) {
-              
-              if(displayOnGraph) {
-                  var classes = [];
-                  var largestHeight = 0;
-
-                  //$.each(data.classes, function(index, element) {
-                  $.each(data.results[0].data, function(index, element) {
-
-                        //console.log(element.name);
-                        
-                        element.row[0].publicMethods = transformToMultiline(element.row[0].publicMethods, 250);
-                        //console.log("publicMethods=" + element.row[0].publicMethods); 
-
-                        element.row[0].privateInstanceVariables = transformToMultiline(element.row[0].privateInstanceVariables, 250);
-                        //console.log("privateInstanceVariables=" + element.row[0].privateInstanceVariables);
-
-                        var calculatedWidth = calcMaxWidthForClass(element.row[0]);
-                        var calculatedHeight = calcMaxHeightForClass(element.row[0]);
-                        if(calculatedHeight > largestHeight) {
-                            largestHeight = calculatedHeight;
-                        }
-
-                        var newClass
-                            = new uml.Class({
-                                size: { width: calculatedWidth, height: calculatedHeight },
-                                name : element.row[0].name,
-                                attributes : element.row[0].privateInstanceVariables,
-                                methods : element.row[0].publicMethods, 
-                                fullyQualifiedName : element.row[0].fullyQualifiedName
-                            });
-
-                            classes.push(newClass);
-
-                    });
-
-                    graph.resetCells(classes);
-
-                    joint.layout.SimpleFitLayout.layout(graph, {
-
-                    });
-
-                    paper.fitToContent();
-
-                    $("#showingpackage").html("Showing " + classes.length + " results");
-                } else {
-                    // display in search results
-                    $("#searchresults").html("<div>Showing " + data.results[0].data.length + " results for '" + $("#classsearchinput").val() + "'");
-
-                    // listing grouped by package - packageSet['pkgName']
-                    var packageMap =  _.groupBy(data.results[0].data, function(cur) {
-                        return cur.row[1].name;
-                    });
-
-                    var tableHtml = "";
-                    tableHtml += "<table class='table'><tbody>";
-
-                    $.each(packageMap, function(packageNameKey, classArray) {
-
-                        // 5 classes per row
-
-                        var currentClassesInRow = 0;
-                        
-                        tableHtml += "<tr><td class='packageresult' colspan='6'><span class='packagelarge'>(" + classArray.length + ") " + packageNameKey + "</span></td></tr>";
-
-                        $.each(classArray, function(curPackage, curClassArray) {
-
-                            if(currentClassesInRow === 0) {
-                                tableHtml += "<tr class='classtablerow'>";
-                            }
-
-                            currentClassesInRow++
-
-                            tableHtml += "<td class='classresult'>" + curClassArray.row[0].name + "</td>";
-                            
-                            if(currentClassesInRow === 5) {
-                                tableHtml += "</tr>";
-                                currentClassesInRow = 0;
-                            }
-                        });
-
-                        if(currentClassesInRow != 0) {
-                            for(i = currentClassesInRow; i < 5; i++) {
-                                tableHtml += "<td class='classresult'></td>";
-                            }
-                            tableHtml += "</tr>"
-                        }
-
-                        
-                    });
-
-                    tableHtml += "</tbody></table>";
-
-                    $("#searchresults").append(tableHtml);
-
-                    $("#toggleclasses").click(function () {
-                        $(".classtablerow").toggle();
-                    });
-                }
-
+            return callback(data);
         }
     });
 
@@ -196,7 +199,7 @@ function searchPackages(searchCriteria) {
 */
 
 $("#searchsubmit").click(function () {
-    searchWithinClasses($("#classsearchinput").val(), false);
+    executeNeo4jQuery(buildGenericSearchQuery($("#classsearchinput").val()), displayInTable);
     $("#search").slideDown(300);
 });
 
@@ -205,7 +208,7 @@ $("#closesearch").click(function () {
 });
 
 $("#showindiagram").click(function () {
-    searchWithinClasses($("#classsearchinput").val(), true);
+    executeNeo4jQuery(buildGenericSearchQuery($("#classsearchinput").val()), displayOnGraph);
     $("#search").slideUp(200);
 });
 
