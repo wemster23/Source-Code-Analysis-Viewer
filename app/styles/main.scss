@@ -103,6 +103,7 @@ body {
       background-color: #000000;
       opacity: 0.95;
       overflow:scroll;
+      z-index:10;
   }
   #closesearch {
     float:right;
