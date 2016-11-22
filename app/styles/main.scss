@@ -39,6 +39,10 @@ body {
   border-top: 1px solid #e5e5e5;
 }
 
+.packageClasses {
+  margin-left:30px;   
+}
+
 /* Responsive: Portrait tablets and up */
 @media screen and (min-width: 768px) {
   .container {
@@ -144,4 +148,6 @@ body {
   a.packagesearchlink {
     color: #ffffff;
   }
+
+
 }
