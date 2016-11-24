@@ -19,6 +19,7 @@
     <!-- endbuild -->
     <!-- build:css(.tmp) styles/main.css -->
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="highlight/styles/default.css">
 
     <!-- endbuild -->
     <!-- build:js scripts/vendor/modernizr.js -->
@@ -46,15 +47,9 @@
         <div id="listpackages" class="col-md-6">
           Below is a listing of all packages in aphabetical order.  Hover over a package for additional options.  Click a package name to expand and show the classes contained in the package.
         </div>
-        <div id="listpackagedepcount" class="col-md-6">
+        <div id="specificdetails" class="col-md-6">
           Below is a listing of packages sorted by those that have the most incoming package dependencies.
         </div>
-      </div>
-
-      <!-- shared div modal that will contain class details -->
-      <div id="classdetails"></div>
-      
-
       </div>
 
       <div class="footer">
@@ -89,7 +84,7 @@
     
 
     <!-- build:js scripts/main.js -->
-    
+    <script src="highlight/highlight.pack.js"></script>
     <script src="scripts/packages.js"></script>
 
 

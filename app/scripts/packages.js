@@ -36,6 +36,7 @@ function displayPackageListing() {
                     var buttonDiv = $('<div/>');
                     $(buttonDiv).addClass('btn-group');
                     $(buttonDiv).addClass('btn-group-xs');
+                    $(buttonDiv).addClass('pkg-btn-group');
                     $(buttonDiv).css('display', 'none');
                     $(buttonDiv).html("<button type='button' class='btn btn-default'>Class UML</button><button type='button' class='btn btn-default'>Analyze Deps</button>");
 
@@ -45,9 +46,9 @@ function displayPackageListing() {
                 });
 
                 $(".pkg").hover(function(evt){
-                    $(evt.target).find('.btn-group').show();
+                    $(evt.target).find('.pkg-btn-group').show();
                 }, function() {
-                    $('.btn-group').hide();
+                    $('.pkg-btn-group').hide();
                 });
 
                 // when clicking on a package name, show display all classes in that package
@@ -115,18 +116,104 @@ function showClassesInPackage(targetElement) {
                     $.each(data.results[0].data, function(index, element) {
 
                         //console.log("Class name: " + element.row[0].name);
-                       
-                        $(packageClassesDiv).append(element.row[0].name + "<br/>");
+
+                        // build class div containing java class name
+                        var classDiv = $('<div/>');
+                        $(classDiv).addClass('classDiv');
+                        $(classDiv).append(element.row[0].name);
+                        //$(classDiv).data('details', element.row[0]);
+
+
+                        // add class hover options to class
+                        var classButtonDiv = $('<div/>');
+                        $(classButtonDiv).addClass('btn-group');
+                        $(classButtonDiv).addClass('btn-group-xs');
+                        $(classButtonDiv).addClass('class-btn-group');
+                        $(classButtonDiv).css('display', 'none');
+                        $(classButtonDiv).data('details', element.row[0]);
+                        $(classButtonDiv).html("<button type='button' class='btn btn-default class-details-button'>Details</button><button type='button' class='btn btn-default class-source-button'>Source</button>");
+                        $(classDiv).append(classButtonDiv);
+
+                        $(packageClassesDiv).append(classDiv);
                     });
 
-                    $(packageClassesDiv).on('click', function (event) {
-                        event.stopPropagation();
-                        console.log(event);  // TODO: Pass name of pkg and class thru and set on details pop up
-                        updateClassDetails();
-                        $("#classdetails").css({'top':event.pageY - 20,'left':event.pageX - 100}).fadeIn('slow');
+                    // show class options next class when hovering over class
+                    $(".classDiv").hover(function(evt){
+                        $(evt.target).find('.class-btn-group').show();
+                    }, function() {
+                        $('.class-btn-group').hide();
+                    });
+
+                    // when clicking the "details" button when hovering over a class, update the specific 
+                    // details div with basic info about the class
+                    $(".class-details-button").on('click', function (evt) {
+                        evt.stopPropagation();
+                        //console.log("clicked classDetailsButton");
+                        var classDetails = $(evt.target).parent(".class-btn-group").data("details");
+                        console.log("name: " + classDetails.name);
+
+                        $("#specificdetails").html("");
+                        var classDetailTable = $('<table/>');
+                        $(classDetailTable).addClass("table");
+                        $(classDetailTable).addClass("table-bordered");
+                        
+                        var classDetailHtml = "<tr><td>Class Name:</td><td>" + classDetails.name + "</td></tr>";
+                        classDetailHtml += "<tr><td>Fully Qualified Name:</td><td>" + classDetails.fullyQualifiedName + "</td></tr>";
+                        classDetailHtml += "<tr><td>Lines of code:</td><td>" + classDetails.linesOfCode + "</td></tr>";
+                        // currently a bug where methods have syntax that isn't escaped and is confused as html tags
+                        classDetailHtml += "<tr><td>Public methods:</td><td>";
+
+
+                        if(classDetails.publicMethods === null || classDetails.publicMethods === undefined) {
+                            console.log("its undefined");
+                        } else {    
+                            classDetailHtml += "<table class='table table-bordered'>";
+                            for(var i = 0; i < classDetails.publicMethods.length; i++) {
+                                classDetailHtml += "<tr><td>" + htmlEntities(classDetails.publicMethods[i]) + "</td></tr>"; 
+                            }
+                            classDetailHtml += "</table>";
+                        }
+
+                        classDetailHtml += "</td></tr>";
+                        classDetailHtml += "<tr><td>Private Instance Variables:</td><td>";
+                        
+                        if(classDetails.privateInstanceVariables === null || classDetails.privateInstanceVariables === undefined) {
+                            console.log("its undefined");
+                        } else {    
+                            classDetailHtml += "<table class='table table-bordered'>";
+                            for(var i = 0; i < classDetails.privateInstanceVariables.length; i++) {
+                                classDetailHtml += "<tr><td>" + htmlEntities(classDetails.privateInstanceVariables[i]) + "</td></tr>"; 
+                            }
+                            classDetailHtml += "</table>";
+                        }
+                        classDetailHtml += "</td></tr>";
+
+                        $(classDetailTable).append(classDetailHtml);
+
+                        $("#specificdetails").append(classDetailTable);
+                    });
+
+                    $(".class-source-button").on('click', function (evt) {
+                        evt.stopPropagation();
+                        //var classDetails = $(evt.target).parent(".class-btn-group").data("details");
+
+                        $("#specificdetails").html("");
+                        
+                        var javaCodePre = $('<pre/>');
+                        $(javaCodePre).addClass("java-code-pre");
+
+                        $(javaCodePre).load( "../codesamples/JavaParser.java", function() {
+                              
+                            //hljs.configure({useBR: true});
+
+                            $('pre').each(function(i, block) {
+                              hljs.highlightBlock(block);
+                            });
+                        });
+
+                        $("#specificdetails").append(javaCodePre);
                     });
                 }
-
         }
     });
 
@@ -158,14 +245,14 @@ function displayMostDepPackages() {
         //now pass a callback to success to do something with the data
         success: function (data) {
                 //console.log(data);
-                $("#listpackagedepcount").append("<table class='table table-hover'><thead><tr><th>Package</th><th>#</th></tr></thead><tbody>");
+                $("#specificdetails").append("<table class='table table-hover'><thead><tr><th>Package</th><th>#</th></tr></thead><tbody>");
 
                 $.each(data.results[0].data, function(index, element) {
 
                     //console.log(element.row[0]);
-                    $("#listpackagedepcount").append("<tr><td>" + element.row[0].name + "</td><td>" + element.row[1] + "</td></tr>");
+                    $("#specificdetails").append("<tr><td>" + element.row[0].name + "</td><td>" + element.row[1] + "</td></tr>");
                 });
-                $("#listpackagedepcount").append("</tbody></table>");
+                $("#specificdetails").append("</tbody></table>");
         }
     });
 
@@ -186,13 +273,6 @@ $("#classdetails").mouseleave(function(){
   $("#classdetails").fadeOut('slow');
 });
 
-function updateClassDetails() {
-    $("#classdetails").html("");
-    //$("#classdetails").append("<h4>" + node.name + "</h4><br/>");
-    //$("#classdetails").append(node.fullyQualifiedName + "<br/><br>");
-    $("#classdetails").append("(Links below do not yet function)<br/>");
-    $("#classdetails").append("<a href='#'>View Source Code</a><br/>");
-    $("#classdetails").append("<a href='#'>View Class In Package</a><br/>");
-    $("#classdetails").append("<a href='#'>View Package Dependency Graph For Class's Package</a><br/>");
-    $("#classdetails").append("<a href='#'>Create Proposed Revision</a><br/>");
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
